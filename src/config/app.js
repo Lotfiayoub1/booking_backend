@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -5,19 +6,13 @@ const morgan = require('morgan');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Booking Backend API is running',
-    version: '1.0.0',
-    health: '/api/health',
-  });
-});
+// Serve static frontend
+app.use(express.static(path.join(__dirname, '../../public')));
 
 app.use('/api', require('../routes'));
 

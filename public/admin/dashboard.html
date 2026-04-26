@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — School Booking</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 1.25rem; }
+    .user-chip { font-size: 0.82rem; color: #c4c4e0; }
+    .btn-logout {
+      background: transparent;
+      border: 1.5px solid #a78bfa;
+      color: #a78bfa;
+      padding: 0.35rem 0.85rem;
+      border-radius: 7px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-logout:hover { background: #a78bfa22; }
+
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .top-bar h2 { font-size: 1.2rem; }
+
+    .btn {
+      padding: 0.55rem 1.1rem;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-danger { background: #dc2626; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #1a1a2e;
+      color: #1a1a2e;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    thead { background: #1a1a2e; color: #fff; }
+    th, td { padding: 0.85rem 1rem; text-align: left; font-size: 0.88rem; }
+    tbody tr:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
+    tbody tr:hover { background: #fafafa; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-yellow { background: #fef9c3; color: #854d0e; }
+    .actions { display: flex; gap: 0.4rem; }
+
+    .empty-row td { text-align: center; color: #999; padding: 2.5rem; }
+
+    /* Modal */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.2);
+    }
+    .modal h3 { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+    input, textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    input:focus, textarea:focus { border-color: #1a1a2e; }
+    textarea { resize: vertical; min-height: 80px; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .btn-ghost {
+      padding: 0.55rem 1rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #1a1a2e; color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Admin Dashboard</h1>
+  <div class="header-right">
+    <span class="user-chip" id="user-chip"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<main>
+  <div class="top-bar">
+    <h2>Sessions</h2>
+    <button class="btn" onclick="openCreate()">+ New Session</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Date &amp; Time</th>
+        <th>Capacity</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="session-tbody">
+      <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<!-- Create/Edit modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modal-title">New Session</h3>
+    <input type="hidden" id="edit-id" />
+    <label>Name *</label>
+    <input type="text" id="f-name" placeholder="e.g. Math Workshop" />
+    <label>Description</label>
+    <textarea id="f-desc" placeholder="Optional description"></textarea>
+    <label>Date &amp; Time *</label>
+    <input type="datetime-local" id="f-datetime" />
+    <label>Max Participants *</label>
+    <input type="number" id="f-max" min="1" placeholder="30" />
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveSession()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/admin/';
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  document.getElementById('user-chip').textContent = user.name || user.email || '';
+
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+  }
+
+  async function loadSessions() {
+    const tbody = document.getElementById('session-tbody');
+    try {
+      const res  = await fetch('/api/sessions', { headers: authHeaders() });
+      const json = await res.json();
+
+      if (res.status === 401) { logout(); return; }
+
+      const data = json.data || [];
+      if (!data.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No sessions yet. Create your first one!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(s => {
+        const date    = new Date(s.date_time).toLocaleString();
+        const spots   = `${s.active_bookings ?? '—'} / ${s.max_participants}`;
+        const status  = s.is_cancelled
+          ? '<span class="badge badge-red">Cancelled</span>'
+          : new Date(s.date_time) < new Date()
+            ? '<span class="badge badge-yellow">Past</span>'
+            : '<span class="badge badge-green">Active</span>';
+        return `
+          <tr>
+            <td>${s.name}</td>
+            <td>${date}</td>
+            <td>${spots}</td>
+            <td>${status}</td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-sm btn-outline" onclick="openEdit(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSession('${s.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    } catch {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Failed to load sessions.</td></tr>';
+    }
+  }
+
+  function openCreate() {
+    document.getElementById('modal-title').textContent = 'New Session';
+    document.getElementById('edit-id').value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-datetime').value = '';
+    document.getElementById('f-max').value = '';
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function openEdit(s) {
+    document.getElementById('modal-title').textContent = 'Edit Session';
+    document.getElementById('edit-id').value = s.id;
+    document.getElementById('f-name').value = s.name;
+    document.getElementById('f-desc').value = s.description || '';
+    // Format for datetime-local input
+    const dt = new Date(s.date_time);
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+    document.getElementById('f-datetime').value = dt.toISOString().slice(0,16);
+    document.getElementById('f-max').value = s.max_participants;
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  async function saveSession() {
+    const id   = document.getElementById('edit-id').value;
+    const body = {
+      name:             document.getElementById('f-name').value.trim(),
+      description:      document.getElementById('f-desc').value.trim(),
+      date_time:        document.getElementById('f-datetime').value,
+      max_participants: parseInt(document.getElementById('f-max').value, 10),
+    };
+    if (!body.name || !body.date_time || !body.max_participants) {
+      showToast('Please fill in all required fields.'); return;
+    }
+
+    const url    = id ? `/api/sessions/${id}` : '/api/sessions';
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+      const res  = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
+      const json = await res.json();
+      closeModal();
+      if (res.ok) { showToast(id ? 'Session updated!' : 'Session created!'); loadSessions(); }
+      else         { showToast(json.message || 'Error saving session.'); }
+    } catch { showToast('Network error.'); }
+  }
+
+  async function deleteSession(id) {
+    if (!confirm('Delete this session?')) return;
+    try {
+      const res  = await fetch(`/api/sessions/${id}`, { method: 'DELETE', headers: authHeaders() });
+      const json = await res.json();
+      if (res.ok) { showToast('Session deleted.'); loadSessions(); }
+      else         { showToast(json.message || 'Error deleting session.'); }
+    } catch { showToast('Network error.'); }
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/admin/';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  loadSessions();
+</script>
+</body>
+</html>
