@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>School Booking System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
+    header a {
+      color: #a78bfa;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    header a:hover { text-decoration: underline; }
+
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: #fff;
+      text-align: center;
+      padding: 4rem 2rem 3rem;
+    }
+    .hero h2 { font-size: 2rem; margin-bottom: 0.75rem; }
+    .hero p  { color: #c4c4e0; font-size: 1rem; }
+
+    main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+
+    h3 { font-size: 1.2rem; margin-bottom: 1rem; color: #1a1a2e; }
+
+    #session-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card h4 { font-size: 1rem; font-weight: 700; }
+    .card .meta { font-size: 0.82rem; color: #666; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #ede9fe;
+      color: #5b21b6;
+      align-self: flex-start;
+    }
+    .badge.full { background: #fee2e2; color: #991b1b; }
+
+    .btn {
+      margin-top: auto;
+      padding: 0.55rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #1a1a2e;
+      color: #fff;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* Modal */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.2);
+    }
+    .modal h3 { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+    input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: #1a1a2e; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .btn-ghost {
+      padding: 0.55rem 1rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+    }
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #1a1a2e; color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .empty { text-align: center; color: #999; padding: 3rem 0; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 School Booking</h1>
+  <a href="/admin/">Admin Login</a>
+</header>
+
+<div class="hero">
+  <h2>Book Your Session</h2>
+  <p>Browse available sessions and reserve your spot instantly — no account needed.</p>
+</div>
+
+<main>
+  <h3>Available Sessions</h3>
+  <div id="session-grid"><p class="empty">Loading sessions…</p></div>
+</main>
+
+<!-- Booking modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Book a Spot</h3>
+    <p id="modal-session-name" style="margin-bottom:1.25rem;color:#555;font-size:.9rem;"></p>
+    <label for="student-name">Your Name *</label>
+    <input type="text" id="student-name" placeholder="e.g. Alice Martin" />
+    <label for="student-email">Email (optional)</label>
+    <input type="email" id="student-email" placeholder="alice@example.com" />
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="submitBooking()">Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let selectedSessionId = null;
+
+  async function loadSessions() {
+    const grid = document.getElementById('session-grid');
+    try {
+      const res = await fetch('/api/public/sessions');
+      const { data } = await res.json();
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = '<p class="empty">No sessions available right now. Check back soon!</p>';
+        return;
+      }
+
+      grid.innerHTML = data.map(s => {
+        const date = new Date(s.date_time).toLocaleString();
+        const full = s.available_spots <= 0;
+        return `
+          <div class="card">
+            <h4>${s.name}</h4>
+            <p class="meta">📅 ${date}</p>
+            <p class="meta">👥 ${s.available_spots} / ${s.max_participants} spots left</p>
+            ${s.description ? `<p class="meta">${s.description}</p>` : ''}
+            <span class="badge ${full ? 'full' : ''}">${full ? 'Full' : 'Available'}</span>
+            <button class="btn" ${full ? 'disabled' : ''} onclick="openModal('${s.id}','${s.name.replace(/'/g,"\\'")}')">
+              Book Now
+            </button>
+          </div>`;
+      }).join('');
+    } catch {
+      grid.innerHTML = '<p class="empty">Could not load sessions. Please try again later.</p>';
+    }
+  }
+
+  function openModal(id, name) {
+    selectedSessionId = id;
+    document.getElementById('modal-session-name').textContent = name;
+    document.getElementById('student-name').value = '';
+    document.getElementById('student-email').value = '';
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    selectedSessionId = null;
+  }
+
+  async function submitBooking() {
+    const name = document.getElementById('student-name').value.trim();
+    const email = document.getElementById('student-email').value.trim();
+    if (!name) { showToast('Please enter your name.'); return; }
+
+    try {
+      const res = await fetch(`/api/public/sessions/${selectedSessionId}/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_name: name, student_email: email || undefined }),
+      });
+      const json = await res.json();
+      closeModal();
+      if (res.ok) {
+        const ref = json.data?.booking_ref ? ` — Ref: ${json.data.booking_ref}` : '';
+        showToast(`Booking confirmed!${ref}`);
+        loadSessions();
+      } else {
+        showToast(json.message || 'Booking failed.');
+      }
+    } catch {
+      showToast('Network error. Please try again.');
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  loadSessions();
+</script>
+</body>
+</html>
