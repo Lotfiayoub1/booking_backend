@@ -23,6 +23,14 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Return 503 on data routes until the database is ready
+app.use('/api', (req, res, next) => {
+  if (!app.locals.dbReady && req.path !== '/health') {
+    return res.status(503).json({ success: false, message: 'Service unavailable — database not connected yet' });
+  }
+  next();
+});
+
 // API routes
 app.use('/api', require('../routes'));
 
