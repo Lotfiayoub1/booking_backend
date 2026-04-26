@@ -10,6 +10,15 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Booking Backend API is running',
+    version: '1.0.0',
+    health: '/api/health',
+  });
+});
+
 app.use('/api', require('../routes'));
 
 app.use((req, res) => {
