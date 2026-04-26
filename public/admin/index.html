@@ -85,10 +85,10 @@
   </div>
 
 <script>
-  // Redirect if already logged in
-  if (localStorage.getItem('token')) {
-    window.location.href = '/admin/dashboard.html';
-  }
+  // Redirect if already logged in (only when auth is active)
+  // if (localStorage.getItem('token')) {
+  //   window.location.href = '/admin/dashboard.html';
+  // }
 
   async function login() {
     const email    = document.getElementById('email').value.trim();

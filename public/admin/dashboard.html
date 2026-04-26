@@ -206,13 +206,13 @@
 
 <script>
   const token = localStorage.getItem('token');
-  if (!token) window.location.href = '/admin/';
-
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  document.getElementById('user-chip').textContent = user.name || user.email || '';
+  document.getElementById('user-chip').textContent = user.name || user.email || 'Admin';
 
   function authHeaders() {
-    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
   }
 
   async function loadSessions() {
